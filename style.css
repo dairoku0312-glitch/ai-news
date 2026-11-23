@@ -1,0 +1,184 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+    "Yu Gothic", Meiryo, sans-serif;
+  background: #f4f5f7;
+  color: #222;
+  line-height: 1.6;
+}
+
+.site-header {
+  background: #1f3a5f;
+  color: #fff;
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+}
+
+.header-meta {
+  font-size: 0.85rem;
+  text-align: right;
+  opacity: 0.95;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #8b1a1a;
+  border-bottom: 1px solid #f0c4c0;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-chip {
+  border: 1px solid #1f3a5f;
+  background: #fff;
+  color: #1f3a5f;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.filter-chip.active {
+  background: #1f3a5f;
+  color: #fff;
+}
+
+#search {
+  flex: 1 1 200px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+}
+
+.day-section {
+  margin-bottom: 28px;
+}
+
+.day-heading {
+  font-size: 1.1rem;
+  border-left: 5px solid #1f3a5f;
+  padding-left: 10px;
+  margin: 0 0 12px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.card-title a {
+  color: #17457c;
+  text-decoration: none;
+}
+
+.card-title a:hover {
+  text-decoration: underline;
+}
+
+.card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.category-chip {
+  background: #e8eef6;
+  color: #1f3a5f;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.78rem;
+}
+
+.status-badge {
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.78rem;
+  color: #fff;
+}
+
+.status-検討中 { background: #b07d1e; }
+.status-決定済み { background: #2e6da4; }
+.status-施行済み { background: #2e7d32; }
+
+.card-summary {
+  margin: 0 0 8px;
+}
+
+.card-points {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.card-impact {
+  margin: 0 0 8px;
+  background: #f7f3e8;
+  border-left: 3px solid #b07d1e;
+  padding: 6px 10px;
+  font-size: 0.92rem;
+}
+
+.card-meta {
+  font-size: 0.8rem;
+  color: #666;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.empty-message {
+  text-align: center;
+  color: #666;
+  padding: 40px 0;
+}
+
+.site-footer {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 24px;
+  font-size: 0.8rem;
+  color: #777;
+}
