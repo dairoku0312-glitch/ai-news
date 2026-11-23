@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIニュース</title>
+<link rel="stylesheet" href="style.css?v=20261123-1">
+</head>
+<body>
+<header class="site-header">
+  <h1>AIニュース</h1>
+  <div class="header-meta">
+    <div id="today-date"></div>
+    <div id="last-updated">最終更新日時：-</div>
+  </div>
+</header>
+
+<div id="error-banner" class="error-banner" hidden></div>
+
+<main>
+  <div class="controls">
+    <div id="filters" class="filters"></div>
+    <input type="search" id="search" placeholder="キーワード検索" aria-label="キーワード検索">
+  </div>
+
+  <div id="news-container"></div>
+  <p id="empty-message" class="empty-message" hidden>表示できるニュースがありません。</p>
+</main>
+
+<footer class="site-footer">
+  <p>本サイトは公開ニュースの要約を掲載しています。詳細は各記事の元記事をご確認ください。</p>
+</footer>
+
+<script src="app.js?v=20261123-1"></script>
+</body>
+</html>
