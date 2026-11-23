@@ -1,0 +1,40 @@
+name: daily-news
+
+on:
+  schedule:
+    # 23:00 UTC = 翌朝 08:00 JST
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch and summarize news
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/fetch_news.py
+
+      - name: Commit updated news data
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/news.json; then
+            echo "data/news.json に変更はありません"
+          else
+            git add data/news.json
+            git commit -m "news: $(TZ=Asia/Tokyo date +%F)"
+            git push
+          fi
