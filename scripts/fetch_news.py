@@ -460,7 +460,7 @@ def summarize(api_key, title, source, body):
                 method="POST",
             )
             try:
-                with urllib.request.urlopen(req, timeout=60) as resp:
+                with urllib.request.urlopen(req, timeout=90) as resp:
                     result = json.loads(resp.read().decode("utf-8"))
                 break
             except urllib.error.HTTPError as e:
@@ -478,10 +478,20 @@ def summarize(api_key, title, source, body):
                 if e.code in (503, 429):
                     break  # このモデルは諦めて次の候補へ
                 raise
+            except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+                # 応答タイムアウト・接続エラーも一時的な失敗として再試行する
+                last_error = e
+                if attempts < 2:
+                    print(f"[warn] Gemini応答なし（{model}）: {e} → 10秒待って再試行")
+                    time.sleep(10)
+                    continue
+                break  # 次のモデル候補へ
         if result is not None:
             break
     if result is None:
-        if last_error is not None and getattr(last_error, "code", None) in (503, 429):
+        if last_error is not None and (
+                getattr(last_error, "code", None) in (503, 429)
+                or isinstance(last_error, (urllib.error.URLError, TimeoutError, ConnectionError))):
             raise TransientGeminiError(str(last_error))
         if last_error is not None:
             raise last_error
@@ -538,6 +548,7 @@ def main():
     accepted = []
     per_cat_count = {}
     body_passed = 0
+    consecutive_transient = 0
     for cand in ordered:
         if len(accepted) >= TOTAL_TARGET:
             break
@@ -565,11 +576,17 @@ def main():
         except TransientGeminiError as e:
             # 一時的な混雑・上限：この記事だけ諦めて次へ（全部ダメなら最後に0件で失敗記録）
             print(f"[skip] Gemini一時エラー（混雑/上限）: {cand['title']} ({e})")
+            consecutive_transient += 1
+            if consecutive_transient >= 3:
+                record_failure(data, f"Geminiが応答しません（混雑/タイムアウトが継続）: {e}")
+                print("[error] Geminiの一時エラーが3件続いたため中断しました。")
+                return 1
             continue
         except Exception as e:
             print(f"[error] Gemini 呼び出し失敗: {e}")
             record_failure(data, f"Gemini API error: {e}")
             return 1
+        consecutive_transient = 0
         if result is None:
             print(f"[skip] 要約不可/skip応答: {cand['title']}")
             continue
