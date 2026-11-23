@@ -1,7 +1,7 @@
 {
   "days": [],
-  "error": "Gemini API error: HTTP Error 503: Service Unavailable",
-  "last_attempt_at": "2026-11-23T21:05:22+09:00",
+  "error": "Gemini API error: The read operation timed out",
+  "last_attempt_at": "2026-11-23T21:09:50+09:00",
   "last_success_at": null,
   "status": "error"
 }
