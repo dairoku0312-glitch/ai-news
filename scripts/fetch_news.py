@@ -108,13 +108,15 @@ MAJOR_DOMAINS = {
 
 # 要約に使うモデル候補（新しい順）。実際に使えるモデルは実行時に
 # ListModels で確認してから選ぶ（モデル名の世代交代で 404 になるのを防ぐ）。
+# 軽量（lite）モデルを先に試す：混雑しにくく応答が速いため。
+# 要約用途なら lite でも十分な品質が得られる。
 PREFERRED_MODELS = [
-    "gemini-3.8-flash",
-    "gemini-3.6-flash",
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
-    "gemini-2.5-flash",
     "gemini-2.5-flash-lite",
+    "gemini-3.8-flash",
+    "gemini-3.6-flash",
+    "gemini-2.5-flash",
 ]
 _env_model = os.environ.get("GEMINI_MODEL", "").strip()
 if _env_model:
@@ -147,9 +149,10 @@ def resolve_model_candidates(api_key):
         ordered = [m for m in PREFERRED_MODELS if m in available]
         extras = [m for m in available
                   if m not in ordered and "flash" in m and "image" not in m]
-        _model_candidates_cache = ordered + extras
+        # 1記事あたりのモデル渡り歩きは最大3つまで（実行時間が伸びすぎるのを防ぐ）
+        _model_candidates_cache = (ordered + extras)[:3]
     else:
-        _model_candidates_cache = list(PREFERRED_MODELS)
+        _model_candidates_cache = list(PREFERRED_MODELS)[:3]
     print(f"[info] モデル候補: {_model_candidates_cache}")
     return _model_candidates_cache
 
@@ -447,7 +450,7 @@ def summarize(api_key, title, source, body):
         # 503（混雑）は少し待って再試行、429（上限）は長めに待って1回だけ再試行、
         # 404（モデル無し）は即次の候補へ。それ以外は即エラー。
         attempts = 0
-        while attempts < 3:
+        while attempts < 2:
             attempts += 1
             req = urllib.request.Request(
                 url,
@@ -460,14 +463,14 @@ def summarize(api_key, title, source, body):
                 method="POST",
             )
             try:
-                with urllib.request.urlopen(req, timeout=90) as resp:
+                with urllib.request.urlopen(req, timeout=45) as resp:
                     result = json.loads(resp.read().decode("utf-8"))
                 break
             except urllib.error.HTTPError as e:
                 last_error = e
                 if e.code == 404:
                     break  # 次のモデル候補へ
-                if e.code == 503 and attempts < 3:
+                if e.code == 503 and attempts < 2:
                     print(f"[warn] Gemini 503（{model}）→ 10秒待って再試行")
                     time.sleep(10)
                     continue
