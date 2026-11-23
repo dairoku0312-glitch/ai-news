@@ -105,7 +105,52 @@ MAJOR_DOMAINS = {
     "bloomberg.co.jp", "toyokeizai.net", "diamond.jp",
 }
 
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+# 要約に使うモデル候補（新しい順）。実際に使えるモデルは実行時に
+# ListModels で確認してから選ぶ（モデル名の世代交代で 404 になるのを防ぐ）。
+PREFERRED_MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+]
+_env_model = os.environ.get("GEMINI_MODEL", "").strip()
+if _env_model:
+    PREFERRED_MODELS = [_env_model] + [m for m in PREFERRED_MODELS if m != _env_model]
+
+_model_candidates_cache = None
+
+
+def resolve_model_candidates(api_key):
+    """ListModels で generateContent 対応モデルを確認し、優先順の候補を返す。"""
+    global _model_candidates_cache
+    if _model_candidates_cache is not None:
+        return _model_candidates_cache
+    available = []
+    try:
+        req = urllib.request.Request(
+            "https://generativelanguage.googleapis.com/v1beta/models",
+            headers={"x-goog-api-key": api_key, "User-Agent": USER_AGENT},
+            method="GET",
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            listing = json.loads(resp.read().decode("utf-8"))
+        for m in listing.get("models", []):
+            methods = m.get("supportedGenerationMethods") or []
+            if "generateContent" in methods:
+                available.append(str(m.get("name", "")).replace("models/", ""))
+    except Exception as e:
+        print(f"[warn] モデル一覧の取得に失敗（候補リストで続行）: {e}")
+    if available:
+        ordered = [m for m in PREFERRED_MODELS if m in available]
+        extras = [m for m in available
+                  if m not in ordered and "flash" in m and "image" not in m]
+        _model_candidates_cache = ordered + extras
+    else:
+        _model_candidates_cache = list(PREFERRED_MODELS)
+    print(f"[info] モデル候補: {_model_candidates_cache}")
+    return _model_candidates_cache
 
 PROMPT_TEMPLATE = """あなたはニュース要約アシスタントです。以下の記事本文だけを使って要約してください。
 
@@ -389,20 +434,35 @@ def summarize(api_key, title, source, body):
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0.2},
     }
-    url = ("https://generativelanguage.googleapis.com/v1beta/models/" +
-           GEMINI_MODEL + ":generateContent")
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "x-goog-api-key": api_key,
-            "User-Agent": USER_AGENT,
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        result = json.loads(resp.read().decode("utf-8"))
+    result = None
+    last_404 = None
+    for model in resolve_model_candidates(api_key):
+        url = ("https://generativelanguage.googleapis.com/v1beta/models/" +
+               model + ":generateContent")
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key,
+                "User-Agent": USER_AGENT,
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                # そのモデルは存在しない/提供終了 → 次の候補を試す
+                last_404 = e
+                continue
+            raise
+    if result is None:
+        if last_404 is not None:
+            raise last_404
+        raise RuntimeError("利用できるGeminiモデルが見つかりませんでした")
 
     text = ""
     try:
