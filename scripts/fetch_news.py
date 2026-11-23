@@ -23,6 +23,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -426,6 +427,10 @@ def fetch_body(url):
 
 # ---------------------------------------------------------------- Gemini 要約
 
+class TransientGeminiError(Exception):
+    """503/429 など一時的な失敗。全モデル・リトライを使い切った場合に投げる。"""
+
+
 def summarize(api_key, title, source, body):
     """Gemini REST で要約。成功時は dict、skip/失敗時は None を返す。"""
     prompt = PROMPT_TEMPLATE.format(
@@ -435,33 +440,51 @@ def summarize(api_key, title, source, body):
         "generationConfig": {"temperature": 0.2},
     }
     result = None
-    last_404 = None
+    last_error = None
     for model in resolve_model_candidates(api_key):
         url = ("https://generativelanguage.googleapis.com/v1beta/models/" +
                model + ":generateContent")
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": api_key,
-                "User-Agent": USER_AGENT,
-            },
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
+        # 503（混雑）は少し待って再試行、429（上限）は長めに待って1回だけ再試行、
+        # 404（モデル無し）は即次の候補へ。それ以外は即エラー。
+        attempts = 0
+        while attempts < 3:
+            attempts += 1
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": api_key,
+                    "User-Agent": USER_AGENT,
+                },
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    result = json.loads(resp.read().decode("utf-8"))
+                break
+            except urllib.error.HTTPError as e:
+                last_error = e
+                if e.code == 404:
+                    break  # 次のモデル候補へ
+                if e.code == 503 and attempts < 3:
+                    print(f"[warn] Gemini 503（{model}）→ 10秒待って再試行")
+                    time.sleep(10)
+                    continue
+                if e.code == 429 and attempts < 2:
+                    print(f"[warn] Gemini 429（{model}）→ 30秒待って再試行")
+                    time.sleep(30)
+                    continue
+                if e.code in (503, 429):
+                    break  # このモデルは諦めて次の候補へ
+                raise
+        if result is not None:
             break
-        except urllib.error.HTTPError as e:
-            if e.code == 404:
-                # そのモデルは存在しない/提供終了 → 次の候補を試す
-                last_404 = e
-                continue
-            raise
     if result is None:
-        if last_404 is not None:
-            raise last_404
+        if last_error is not None and getattr(last_error, "code", None) in (503, 429):
+            raise TransientGeminiError(str(last_error))
+        if last_error is not None:
+            raise last_error
         raise RuntimeError("利用できるGeminiモデルが見つかりませんでした")
 
     text = ""
@@ -539,6 +562,10 @@ def main():
 
         try:
             result = summarize(api_key, cand["title"], cand["source"], body)
+        except TransientGeminiError as e:
+            # 一時的な混雑・上限：この記事だけ諦めて次へ（全部ダメなら最後に0件で失敗記録）
+            print(f"[skip] Gemini一時エラー（混雑/上限）: {cand['title']} ({e})")
+            continue
         except Exception as e:
             print(f"[error] Gemini 呼び出し失敗: {e}")
             record_failure(data, f"Gemini API error: {e}")
