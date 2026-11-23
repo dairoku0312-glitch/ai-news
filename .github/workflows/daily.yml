@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# 同時実行を防ぐ（実行中に手動実行が重なると push が競合するため）
+concurrency:
+  group: daily-news
+  cancel-in-progress: false
+
 jobs:
   update-news:
     runs-on: ubuntu-latest
@@ -36,5 +41,10 @@ jobs:
           else
             git add data/news.json
             git commit -m "news: $(TZ=Asia/Tokyo date +%F)"
-            git push
+            # 実行中にリモートが進んでいても push できるよう、取り込んでから push（最大3回）
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "push リトライ $i 回目"
+              sleep 5
+            done
           fi
