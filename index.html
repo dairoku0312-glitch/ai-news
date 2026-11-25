@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AIニュース</title>
-<link rel="stylesheet" href="style.css?v=20261125-1">
+<link rel="stylesheet" href="style.css?v=20261126-1">
 </head>
 <body>
 <header class="site-header">
@@ -23,6 +23,17 @@
     <input type="search" id="search" placeholder="キーワード検索" aria-label="キーワード検索">
   </div>
 
+  <div class="calendar-box">
+    <div class="cal-head">
+      <button id="cal-prev" class="cal-nav" type="button">← 前の月</button>
+      <span id="cal-title" class="cal-title"></span>
+      <button id="cal-next" class="cal-nav" type="button">次の月 →</button>
+    </div>
+    <div class="cal-week"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+    <div id="calendar" class="cal-grid"></div>
+    <p class="cal-note">数字の下に点のある日が、ニュースのある日です。日付を押すと、その日のニュースだけを表示します。キーワード検索をすると、全ての日から探します。</p>
+  </div>
+
   <div id="news-container"></div>
   <p id="empty-message" class="empty-message" hidden>表示できるニュースがありません。</p>
 </main>
@@ -31,6 +42,6 @@
   <p>本サイトは公開ニュースの要約を掲載しています。詳細は各記事の元記事をご確認ください。</p>
 </footer>
 
-<script src="app.js?v=20261125-1"></script>
+<script src="app.js?v=20261126-1"></script>
 </body>
 </html>
