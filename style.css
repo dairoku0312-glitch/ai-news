@@ -111,6 +111,21 @@ main {
 
 .card-title a {
   color: #17457c;
+  text-decoration: underline;
+}
+
+.card-actions {
+  margin-top: 10px;
+}
+
+.source-link {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 1px solid #17457c;
+  border-radius: 999px;
+  color: #17457c;
+  font-size: 0.85rem;
+  font-weight: 600;
   text-decoration: none;
 }
 
