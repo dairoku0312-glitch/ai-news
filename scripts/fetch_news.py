@@ -45,7 +45,7 @@ MAX_BODY_CHARS = 6000       # Gemini に送る本文の上限
 PER_CATEGORY_CAP = 3        # 1カテゴリあたりの掲載上限
 TOTAL_TARGET = 8            # 1日の掲載目標件数
 PER_CATEGORY_POOL = 10      # 順位付け後に残す候補プール（カテゴリごと）
-MAX_DAYS = 30               # news.json に保持する日数
+MAX_DAYS = 90               # news.json に保持する日数
 
 # 収集元 RSS: (URL, デフォルトカテゴリ, 情報源名)
 # デフォルトカテゴリが None のフィードは「プール」として扱い、
