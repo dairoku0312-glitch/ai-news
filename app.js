@@ -12,6 +12,53 @@ const CATEGORIES = [
 let allDays = [];
 let activeCategory = "すべて";
 let keyword = "";
+let selectedDate = null;
+let calYear = 0;
+let calMonth = 0; // 0-based
+
+function dateStrOf(y, m, d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return y + "-" + pad(m + 1) + "-" + pad(d);
+}
+
+function renderCalendar() {
+  const title = document.getElementById("cal-title");
+  const grid = document.getElementById("calendar");
+  if (!title || !grid) return;
+  title.textContent = calYear + "年" + (calMonth + 1) + "月";
+  const has = {};
+  allDays.forEach((day) => { has[day.date] = true; });
+  const todayStr = todayJstString();
+  const startDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  grid.innerHTML = "";
+  for (let i = 0; i < startDay; i++) {
+    const blank = document.createElement("span");
+    blank.className = "cal-cell cal-blank";
+    grid.appendChild(blank);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = dateStrOf(calYear, calMonth, d);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "cal-cell cal-day";
+    btn.innerHTML = "<span class=\"cal-num\">" + d + "</span>" +
+      (has[ds] ? "<span class=\"cal-dot\">●</span>" : "<span class=\"cal-dot cal-dot-none\">・</span>");
+    if (ds === todayStr) btn.classList.add("is-today");
+    if (ds === selectedDate) btn.classList.add("is-selected");
+    if (!has[ds]) {
+      btn.disabled = true;
+      btn.classList.add("is-empty");
+    } else {
+      btn.addEventListener("click", () => {
+        selectedDate = ds;
+        renderCalendar();
+        render();
+      });
+    }
+    grid.appendChild(btn);
+  }
+}
 
 function escapeHtml(s) {
   return String(s == null ? "" : s)
@@ -104,7 +151,12 @@ function render() {
   let html = "";
   let anyVisible = false;
 
-  allDays.forEach((day) => {
+  // キーワード検索中は全ての日から探す。それ以外はカレンダーで選んだ日だけ表示する。
+  const targetDays = keyword
+    ? allDays
+    : allDays.filter((day) => day.date === selectedDate);
+
+  targetDays.forEach((day) => {
     const items = (day.items || []).filter(itemMatches);
     if (items.length === 0) return;
     anyVisible = true;
@@ -164,8 +216,24 @@ async function init() {
   }
 
   allDays = Array.isArray(data.days) ? data.days : [];
+  selectedDate = allDays.length ? allDays[0].date : todayJstString();
+  const sel = new Date(selectedDate + "T00:00:00+09:00");
+  calYear = sel.getFullYear();
+  calMonth = sel.getMonth();
   renderFilters();
+  renderCalendar();
   render();
+
+  document.getElementById("cal-prev").addEventListener("click", () => {
+    calMonth -= 1;
+    if (calMonth < 0) { calMonth = 11; calYear -= 1; }
+    renderCalendar();
+  });
+  document.getElementById("cal-next").addEventListener("click", () => {
+    calMonth += 1;
+    if (calMonth > 11) { calMonth = 0; calYear += 1; }
+    renderCalendar();
+  });
 
   document.getElementById("search").addEventListener("input", (ev) => {
     keyword = ev.target.value.trim();
