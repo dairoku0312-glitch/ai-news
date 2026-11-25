@@ -91,6 +91,8 @@ function renderCard(item) {
     '<div class="card-meta"><span>情報源：' + escapeHtml(item.source || "-") + "</span>" +
     (published ? "<span>元記事の公開日：" + escapeHtml(published) + "</span>" : "") +
     "</div>" +
+    '<div class="card-actions"><a class="source-link" href="' + escapeHtml(item.url) +
+    '" target="_blank" rel="noopener noreferrer">元記事を読む →</a></div>' +
     "</article>"
   );
 }
