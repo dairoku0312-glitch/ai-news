@@ -197,3 +197,61 @@ main {
   font-size: 0.8rem;
   color: #777;
 }
+
+/* ---- カレンダー ---- */
+.calendar-box {
+  background: #fff;
+  border: 1px solid #dde1e6;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.cal-title { font-weight: 700; font-size: 1.05rem; }
+.cal-nav {
+  background: #eef1f4;
+  border: 1px solid #ccd3da;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.cal-week, .cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-week span {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #77808a;
+  padding: 2px 0;
+}
+.cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+.cal-day {
+  background: #fff;
+  border: 1px solid #dde1e6;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.cal-day .cal-dot { font-size: 0.5rem; color: #2e7d32; line-height: 1; }
+.cal-day .cal-dot-none { color: transparent; }
+.cal-day.is-today { border-color: #1f3a5f; border-width: 2px; font-weight: 700; }
+.cal-day.is-selected { background: #1f3a5f; color: #fff; }
+.cal-day.is-selected .cal-dot { color: #ffd54f; }
+.cal-day.is-empty { color: #c3c9cf; background: #f7f8f9; cursor: default; }
+.cal-blank { background: transparent; }
+.cal-note { font-size: 0.8rem; color: #77808a; margin: 8px 0 0; }
