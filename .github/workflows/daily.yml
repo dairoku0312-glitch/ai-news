@@ -2,8 +2,8 @@ name: daily-news
 
 on:
   schedule:
-    # 22:15 UTC = 翌朝 07:15 JST（GitHubの0分混雑を避け、8時までに更新が間に合うよう早めに起動）
-    - cron: '15 22 * * *'
+    # 22:00 UTC = 翌朝 07:00 JST（遅延が約50〜60分あるため、8時頃の更新完了を狙って前倒し。2026-11-28に07:15から変更）
+    - cron: '00 22 * * *'
   workflow_dispatch:
 
 permissions:
